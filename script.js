@@ -469,14 +469,6 @@ function getPlayableHands(hand) {
             }
         });
         candidates.push(...getStairsInHand(hand));
-
-        // 場が空の場合は、「複数枚（枚数が多い）」かつ「弱いカード」から優先して出すようにソート
-        candidates.sort((a, b) => {
-            if (a.length !== b.length) {
-                return b.length - a.length; // 枚数が多い順（ペアや階段を優先）
-            }
-            return getMaxPower(a, State.isRevolution) - getMaxPower(b, State.isRevolution); // 同じ枚数なら弱い順
-        });
     } else {
         // 場にカードがある場合
         const lastType = getHandType(State.lastPlayedCards);
@@ -496,21 +488,50 @@ function getPlayableHands(hand) {
         } else if (lastType.type === 'stairs') {
             getStairsInHand(hand).forEach(s => { if (s.length === lastCount && canPlay(s)) candidates.push(s); });
         }
-        // 場にカードがある場合は、単に「弱いカード」から優先して返す
-        candidates.sort((a, b) => getMaxPower(a, State.isRevolution) - getMaxPower(b, State.isRevolution));
     }
 
-    // ★ 反則上がりの回避ロジック ★
-    // 出した結果、手札がなくなる（上がり）となる場合、それが反則なら候補から除外する
-    candidates = candidates.filter(candidate => {
-        if (candidate.length === hand.length) {
-            // これを出すと手札が0になるので「上がり」
-            if (isFoulWin(candidate, State.isRevolution)) {
-                return false; // 反則上がりになる手は選ばない
-            }
+    // ★ 反則上がりの回避・諦めロジック ★
+    // カテゴリー分類: 1(通常上がり) < 2(通常出し) < 3(出すと手札が反則上がりカードのみ残る) < 4(反則上がり)
+    const getCategory = (cand) => {
+        if (cand.length === hand.length) {
+            return isFoulWin(cand, State.isRevolution) ? 4 : 1;
+        } else {
+            const rem = hand.filter(c => !cand.includes(c));
+            const onlyFoul = rem.every(c => {
+                if (c.number === 0) return true;
+                if (c.number === 8) return true;
+                if (State.isRevolution) {
+                    return c.number === 3;
+                } else {
+                    return c.number === 2 || (c.number === 3 && c.suit === 'spade');
+                }
+            });
+            return onlyFoul ? 3 : 2;
         }
-        return true;
-    });
+    };
+
+    if (State.lastPlayedCards.length === 0) {
+        // 場が空の場合は、「複数枚（枚数が多い）」かつ「弱いカード」から優先して出すようにソート
+        candidates.sort((a, b) => {
+            const catA = getCategory(a);
+            const catB = getCategory(b);
+            if (catA !== catB) return catA - catB;
+
+            if (a.length !== b.length) {
+                return b.length - a.length; // 枚数が多い順（ペアや階段を優先）
+            }
+            return getMaxPower(a, State.isRevolution) - getMaxPower(b, State.isRevolution); // 同じ枚数なら弱い順
+        });
+    } else {
+        // 場にカードがある場合は、単に「弱いカード」から優先して返す
+        candidates.sort((a, b) => {
+            const catA = getCategory(a);
+            const catB = getCategory(b);
+            if (catA !== catB) return catA - catB;
+
+            return getMaxPower(a, State.isRevolution) - getMaxPower(b, State.isRevolution);
+        });
+    }
 
     return candidates;
 }
