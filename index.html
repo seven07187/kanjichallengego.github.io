@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>漢字チャレンジGO - 漢検レベル別 漢字読みクイズ</title>
+  <meta name="description" content="漢検レベル別（1級・準1級〜3級）の漢字の読みを答えるブラウザクイズゲーム。ひらがなで読みを入力してハイスコアを目指そう！" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="game-container">
+
+    <!-- ===== タイトル画面 ===== -->
+    <section id="title-screen" class="screen glass-card">
+      <div class="title-icon">📖</div>
+      <h1 class="title-logo">漢字チャレンジGO</h1>
+      <p class="title-sub">〜 漢検レベル別 読みクイズ 〜</p>
+      <div class="input-area" style="margin-bottom: 30px; flex-direction: column; gap: 5px;">
+        <input type="text" id="test-input" placeholder="日本語入力確認（Enterでスタート）" autocomplete="off" autocorrect="off"
+          autocapitalize="off" spellcheck="false" />
+      </div>
+      <button id="start-btn" class="btn btn-primary">スタート</button>
+    </section>
+
+    <!-- ===== レベル選択画面 ===== -->
+    <section id="level-screen" class="screen glass-card relative-container">
+      <div class="top-buttons">
+        <button id="ranking-btn" class="icon-btn ranking-btn" title="ランキング">🏆</button>
+        <button id="settings-btn" class="icon-btn settings-btn" title="設定">⚙️</button>
+      </div>
+      
+      <div class="player-name-area">
+        <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" autocomplete="off" spellcheck="false" maxlength="15" />
+        <button id="player-name-save-btn" class="btn btn-secondary btn-small">登録</button>
+        <div id="player-name-message" class="name-message"></div>
+      </div>
+
+      <h2 class="level-title">レベルを選んでください</h2>
+      <div class="level-grid">
+        <button class="level-btn" data-level="1級">
+          <span class="level-icon">🔴</span>
+          <span class="level-info">
+            <span class="level-name">漢検1級</span>
+            <span class="level-desc">難読・熟語・当て字</span>
+          </span>
+        </button>
+        <button class="level-btn" data-level="準1級">
+          <span class="level-icon">🟣</span>
+          <span class="level-info">
+            <span class="level-name">漢検準1級</span>
+            <span class="level-desc">大学・一般レベル</span>
+          </span>
+        </button>
+        <button class="level-btn" data-level="2級">
+          <span class="level-icon">🟠</span>
+          <span class="level-info">
+            <span class="level-name">漢検2級</span>
+            <span class="level-desc">高校卒業レベル</span>
+          </span>
+        </button>
+        <button class="level-btn" data-level="準2級">
+          <span class="level-icon">🔵</span>
+          <span class="level-info">
+            <span class="level-name">漢検準2級</span>
+            <span class="level-desc">高校在学レベル</span>
+          </span>
+        </button>
+        <button class="level-btn" data-level="3級">
+          <span class="level-icon">🟢</span>
+          <span class="level-info">
+            <span class="level-name">漢検3級</span>
+            <span class="level-desc">中学卒業レベル</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== 設定画面 ===== -->
+    <section id="settings-screen" class="screen glass-card">
+      <h2 class="level-title">制限時間の設定</h2>
+      <div class="level-grid" id="time-limit-options">
+        <button class="level-btn time-btn" data-time="3">
+          <span class="level-icon">⚡</span>
+          <span class="level-info">
+            <span class="level-name">3秒</span>
+            <span class="level-desc">神業レベル・考える暇なし</span>
+          </span>
+        </button>
+        <button class="level-btn time-btn" data-time="5">
+          <span class="level-icon">⏳</span>
+          <span class="level-info">
+            <span class="level-name">5秒</span>
+            <span class="level-desc">超上級者向け・瞬発力勝負</span>
+          </span>
+        </button>
+        <button class="level-btn time-btn active-setting" data-time="10">
+          <span class="level-icon">⏱️</span>
+          <span class="level-info">
+            <span class="level-name">10秒</span>
+            <span class="level-desc">標準的な難易度（デフォルト）</span>
+          </span>
+        </button>
+        <button class="level-btn time-btn" data-time="15">
+          <span class="level-icon">🐢</span>
+          <span class="level-info">
+            <span class="level-name">15秒</span>
+            <span class="level-desc">じっくり考えたい人向け</span>
+          </span>
+        </button>
+      </div>
+      <div class="result-buttons" style="margin-top: 24px;">
+        <button id="settings-back-btn" class="btn btn-secondary">級選択に戻る</button>
+      </div>
+    </section>
+
+    <!-- ===== ゲーム画面 ===== -->
+    <section id="game-screen" class="screen glass-card">
+      <div class="game-header">
+        <span class="level-badge">漢検3級</span>
+        <span class="score-display">SCORE: 0</span>
+      </div>
+      <div class="lives-display">❤️❤️❤️❤️❤️</div>
+      <div class="game-info-row">
+        <span class="streak-display"></span>
+        <span class="question-count">1 / 25</span>
+      </div>
+      <div id="timer-text" class="timer-text">10.0</div>
+      <div class="timer-container">
+        <div id="timer-bar" class="timer-bar"></div>
+      </div>
+      <div class="kanji-area">
+        <div class="kanji-text">漢字</div>
+      </div>
+      <div class="input-area">
+        <input type="text" id="answer-input" placeholder="ひらがなで読みを入力" autocomplete="off" autocorrect="off"
+          autocapitalize="off" spellcheck="false" />
+        <button id="submit-btn" class="btn btn-primary">決定</button>
+      </div>
+      <div class="feedback">
+        <div class="feedback-message"></div>
+      </div>
+      <div class="retire-area">
+        <button id="retire-btn" class="btn btn-retire">🏳️ リタイア</button>
+      </div>
+    </section>
+
+    <!-- ===== ゲームオーバー画面 ===== -->
+    <section id="gameover-screen" class="screen glass-card">
+      <div class="gameover-icon">💀</div>
+      <h2 class="gameover-title">GAME OVER</h2>
+      <div class="result-stats">
+        <div class="stat-row">
+          <span class="stat-label">スコア</span>
+          <span class="stat-value" id="go-score">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">ハイスコア</span>
+          <span class="stat-value highscore" id="go-highscore">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">最大連続正解</span>
+          <span class="stat-value" id="go-best-streak">0</span>
+        </div>
+      </div>
+      <div id="go-new-highscore" class="hidden">
+        <span class="highscore-badge">🎉 NEW HIGH SCORE!</span>
+      </div>
+      <div class="result-buttons">
+        <button id="retry-btn" class="btn btn-primary">もう一度遊ぶ</button>
+        <button id="go-title-btn" class="btn btn-secondary">級選択に戻る</button>
+      </div>
+    </section>
+
+    <!-- ===== クリア画面 ===== -->
+    <section id="clear-screen" class="screen glass-card">
+      <div class="clear-icon">🎊</div>
+      <h2 class="clear-title">ALL CLEAR!</h2>
+      <div class="result-stats">
+        <div class="stat-row">
+          <span class="stat-label">スコア</span>
+          <span class="stat-value" id="cl-score">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">ハイスコア</span>
+          <span class="stat-value highscore" id="cl-highscore">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">最大連続正解</span>
+          <span class="stat-value" id="cl-best-streak">0</span>
+        </div>
+      </div>
+      <div id="cl-new-highscore" class="hidden">
+        <span class="highscore-badge">🎉 NEW HIGH SCORE!</span>
+      </div>
+      <div class="result-buttons">
+        <button id="cl-retry-btn" class="btn btn-primary">もう一度遊ぶ</button>
+        <button id="cl-title-btn" class="btn btn-secondary">タイトルに戻る</button>
+      </div>
+    </section>
+
+    <!-- ===== ランキング画面 ===== -->
+    <section id="ranking-screen" class="screen glass-card relative-container">
+      <button id="ranking-back-btn" class="icon-btn back-btn" title="戻る">❌</button>
+      <div class="ranking-header">
+        <span class="ranking-icon">🏆</span>
+        <h2 class="ranking-title">ランキング</h2>
+      </div>
+      
+      <div class="ranking-tabs">
+        <button class="tab-btn active" data-level="1級">1級</button>
+        <button class="tab-btn" data-level="準1級">準1級</button>
+        <button class="tab-btn" data-level="2級">2級</button>
+        <button class="tab-btn" data-level="準2級">準2級</button>
+        <button class="tab-btn" data-level="3級">3級</button>
+      </div>
+      
+      <div class="ranking-list" id="ranking-list-container">
+        <div class="loading-spinner">読み込み中...</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Flash overlay -->
+  <div class="screen-flash"></div>
+
+  <script src="questions.js"></script>
+  <script src="questions_1.js"></script>
+  <script src="questions_1b.js"></script>
+  <script src="questions_j1.js"></script>
+  <script src="questions_j1b.js"></script>
+  <script src="questions_2.js"></script>
+  <script src="questions_2b.js"></script>
+  <script src="questions_j2.js"></script>
+  <script src="questions_j2b.js"></script>
+  <script src="questions_3.js"></script>
+  <script src="questions_3b.js"></script>
+  <script src="questions_extra.js"></script>
+  <script type="module" src="firebase-db.js"></script>
+  <script src="game.js"></script>
+</body>
+
+</html>
